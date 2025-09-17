@@ -1,0 +1,21 @@
+{"timestamp":"2025-09-16 13:25:39","level":"warn","message":"CLOUDFRONT_DOMAIN not set, using S3 direct URLs","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-16 13:25:50","level":"info","message":"🚀 Clinical Trials Data Collector Server ready at http://localhost:4000","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-16 13:25:50","level":"info","message":"📊 GraphQL endpoint: http://localhost:4000/graphql","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-16 13:25:50","level":"info","message":"🏥 Health check: http://localhost:4000/health","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-16 13:25:50","level":"info","message":"📋 Environment: development","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-16 13:26:20","level":"info","message":"SIGINT received, shutting down gracefully","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-17 10:34:54","level":"warn","message":"CLOUDFRONT_DOMAIN not set, using S3 direct URLs","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-17 10:34:54","level":"info","message":"🚀 Clinical Trials Data Collector Server ready at http://localhost:4000","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-17 10:34:54","level":"info","message":"📊 GraphQL endpoint: http://localhost:4000/graphql","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-17 10:34:54","level":"info","message":"🏥 Health check: http://localhost:4000/health","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-17 10:34:54","level":"info","message":"📋 Environment: development","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-17 10:36:45","level":"warn","message":"Invalid JWT token:","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-17 10:36:47","level":"info","message":"User authenticated successfully: juhi@gmail.com","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-17 10:38:40","level":"warn","message":"JWT token expired:","service":"clinical-trials-collector","expiredAt":"2025-09-16T15:36:02.000Z"}
+{"timestamp":"2025-09-17 10:38:42","level":"warn","message":"JWT token expired:","service":"clinical-trials-collector","expiredAt":"2025-09-16T15:36:02.000Z"}
+{"timestamp":"2025-09-17 10:45:33","level":"info","message":"SIGINT received, shutting down gracefully","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-17 10:50:27","level":"warn","message":"CLOUDFRONT_DOMAIN not set, using S3 direct URLs","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-17 10:50:42","level":"info","message":"🚀 Clinical Trials Data Collector Server ready at http://localhost:4000","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-17 10:50:42","level":"info","message":"📊 GraphQL endpoint: http://localhost:4000/graphql","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-17 10:50:42","level":"info","message":"🏥 Health check: http://localhost:4000/health","service":"clinical-trials-collector"}
+{"timestamp":"2025-09-17 10:50:42","level":"info","message":"📋 Environment: development","service":"clinical-trials-collector"}

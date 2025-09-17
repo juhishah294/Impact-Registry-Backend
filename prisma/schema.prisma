@@ -1,0 +1,1658 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Institute {
+  id                      String @id @default(uuid()) @db.Uuid
+  centerName              String @db.VarChar(255)
+  address                 String @db.Text
+  contactInformation      String @db.Text
+  headOfDepartment        String @db.VarChar(255)
+  headOfDepartmentContact String @db.VarChar(255)
+  coInvestigatorName      String @db.VarChar(255)
+  coInvestigatorContact   String @db.VarChar(255)
+
+  // Center Type
+  isPublicSector      Boolean @default(false)
+  isPrivateNonProfit  Boolean @default(false)
+  isCorporateHospital Boolean @default(false)
+  isPrivatePractice   Boolean @default(false)
+
+  // Payment modes for private sector
+  privateInsurance    Boolean @default(false)
+  governmentInsurance Boolean @default(false)
+  selfPayment         Boolean @default(false)
+
+  // Public sector coverage
+  medications100Percent Boolean @default(false)
+  medicationsReduced    Boolean @default(false)
+  medicationsFullCost   Boolean @default(false)
+  lab100Percent         Boolean @default(false)
+  labReduced            Boolean @default(false)
+  labFullCost           Boolean @default(false)
+  hd100Percent          Boolean @default(false)
+  hdReduced             Boolean @default(false)
+  hdFullCost            Boolean @default(false)
+  pd100Percent          Boolean @default(false)
+  pdReduced             Boolean @default(false)
+  pdFullCost            Boolean @default(false)
+  transplant100Percent  Boolean @default(false)
+  transplantReduced     Boolean @default(false)
+  transplantFullCost    Boolean @default(false)
+
+  // Teaching hospital
+  isTeachingHospital Boolean @default(false)
+  isUGCenter         Boolean @default(false)
+  isPGCenter         Boolean @default(false)
+
+  // Pediatric nephrology training
+  hasPediatricTraining Boolean @default(false)
+  trainingType         String? @db.VarChar(100)
+
+  // Capacity
+  numberOfBeds    Int @default(0)
+  numberOfFaculty Int @default(0)
+  averageTrainees Int @default(0)
+
+  // Clinical services
+  standaloneCKDClinic     Boolean @default(false)
+  clinicalCareNonDialysis Boolean @default(false)
+  avFistulaCreation       Boolean @default(false)
+  cuffedPDCatheter        Boolean @default(false)
+  permcathInsertion       Boolean @default(false)
+  maintenanceHD           Boolean @default(false)
+  standalonePediatricHD   Boolean @default(false)
+  housedInAdultUnit       Boolean @default(false)
+  maintenancePD           Boolean @default(false)
+  manualCAPD              Boolean @default(false)
+  cyclerCCPD              Boolean @default(false)
+  kidneyTransplant        Boolean @default(false)
+  livingDonorTransplant   Boolean @default(false)
+  deceasedDonorTransplant Boolean @default(false)
+
+  // Available services
+  routineLabServices        Boolean @default(false)
+  crossMatchLab             Boolean @default(false)
+  hlaTypingLab              Boolean @default(false)
+  donorSpecificAntibodies   Boolean @default(false)
+  therapeuticDrugMonitoring Boolean @default(false)
+  virologyLab               Boolean @default(false)
+  ultrasound                Boolean @default(false)
+  doppler                   Boolean @default(false)
+  nuclearMedicine           Boolean @default(false)
+  ctOrMri                   Boolean @default(false)
+  echo                      Boolean @default(false)
+  urology                   Boolean @default(false)
+  interventionalRadiology   Boolean @default(false)
+  picu                      Boolean @default(false)
+  nicu                      Boolean @default(false)
+  renalHistopathology       Boolean @default(false)
+  ambulatoryBP              Boolean @default(false)
+
+  // Personnel
+  pediatricNephrologists Boolean @default(false)
+  ckdNurse               Boolean @default(false)
+  dialysisNurse          Boolean @default(false)
+  hdTechnicians          Boolean @default(false)
+  transplantCoordinator  Boolean @default(false)
+  socialWorker           Boolean @default(false)
+  renalDietician         Boolean @default(false)
+  psychologist           Boolean @default(false)
+  patientSupportGroups   Boolean @default(false)
+  inPersonEducation      Boolean @default(false)
+  onlineEducation        Boolean @default(false)
+
+  status          Int             @default(1) // Active = 1, Inactive = 0
+  approvalStatus  InstituteStatus @default(PENDING_APPROVAL)
+  approvedBy      String?         @db.Uuid
+  approvedAt      DateTime?       @db.Timestamptz(6)
+  rejectionReason String?         @db.Text
+  createdAt       DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime        @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  users          User[]
+  patients       Patient[]
+  approvedByUser User?               @relation("InstituteApprover", fields: [approvedBy], references: [id])
+  exportRequests DataExportRequest[]
+}
+
+model User {
+  id          String   @id @default(uuid()) @db.Uuid
+  email       String   @unique
+  firstName   String   @db.VarChar(255)
+  lastName    String   @db.VarChar(255)
+  password    String
+  role        UserRole @default(DATA_ENTRY)
+  status      Int      @default(1)
+  instituteId String?  @db.Uuid
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  institute                Institute?              @relation(fields: [instituteId], references: [id])
+  approvedInstitutes       Institute[]             @relation("InstituteApprover")
+  adverseEvents            AdverseEvent[]
+  auditLogs                AuditLog[]
+  trialsAssigned           ClinicalTrial[]         @relation("TrialAssignee")
+  trialsCreated            ClinicalTrial[]         @relation("TrialCreator")
+  complianceReports        ComplianceReport[]
+  dataEntries              DataEntry[]
+  dataExports              DataExport[]
+  enrollments              PatientEnrollment[]
+  consentUploads           InformedConsent[]       @relation("ConsentUploader")
+  consentVerifications     InformedConsent[]       @relation("ConsentVerifier")
+  exportRequests           DataExportRequest[]
+  calculatorResults        CalculatorResult[]
+  exitsReported            PatientExit[]           @relation("ExitReportedBy")
+  exitsVerified            PatientExit[]           @relation("ExitVerifiedBy")
+  lossToFollowUpChecklists PatientLossToFollowUp[] @relation("LossToFollowUpChecklist")
+}
+
+model Patient {
+  id             String   @id @default(uuid()) @db.Uuid
+  patientId      String   @unique @db.VarChar(50)
+  firstName      String   @db.VarChar(255)
+  lastName       String   @db.VarChar(255)
+  dateOfBirth    DateTime @db.Date
+  gender         Gender
+  email          String?  @db.VarChar(255)
+  phone          String?  @db.VarChar(20)
+  medicalHistory String?
+
+  // Institute relationship
+  instituteId String @db.Uuid
+
+  // Contact Information (Guardian/Parent details)
+  guardianName         String? @db.VarChar(200)
+  guardianPhone        String? @db.VarChar(20)
+  guardianEmail        String? @db.VarChar(255)
+  guardianRelationship String? @db.VarChar(50)
+
+  // Socioeconomic Information
+  motherEducationLevel    EducationLevel?
+  fatherEducationLevel    EducationLevel?
+  primaryCaregiver        PrimaryCaregiver?
+  earningMembersCount     Int?
+  primaryEarnerOccupation Occupation?
+  dependentsCount         Int?
+  familyIncome            FamilyIncomeRange?
+
+  // Payment Information for CKD Care
+  paymentMode           PaymentMode?
+  hasHealthInsurance    Boolean?       @default(false)
+  insuranceType         InsuranceType?
+  insuranceProvider     String?        @db.VarChar(200)
+  insurancePolicyNumber String?        @db.VarChar(100)
+  otherPaymentDetails   String?        @db.Text
+
+  // Basic consent fields (legacy - keeping for backward compatibility)
+  consentStatus Boolean   @default(false)
+  consentDate   DateTime?
+
+  // Enhanced informed consent fields
+  consentStatusEnum   ConsentStatus @default(PENDING)
+  consentType         ConsentType?
+  consentObtainedDate DateTime?     @db.Date
+  isVerbalConsent     Boolean       @default(false)
+  isWrittenConsent    Boolean       @default(false)
+  consentNotes        String?       @db.Text
+
+  // Assent for minors
+  assentRequired Boolean   @default(false)
+  assentObtained Boolean   @default(false)
+  assentDate     DateTime? @db.Date
+
+  // Ethics approval
+  ethicsApprovalRequired Boolean   @default(false)
+  ethicsApprovalNumber   String?   @db.VarChar(100)
+  ethicsApprovalDate     DateTime? @db.Date
+
+  // Clinical History and CKD Information
+  ageAtDiagnosis          Int? // Age in months
+  primaryRenalDiagnosis   PrimaryRenalDiagnosis?
+  symptomDurationYears    Int?
+  symptomDurationMonths   Int?
+  diagnosisDurationYears  Int?
+  diagnosisDurationMonths Int?
+  surgicalInterventions   String?                @db.Text
+  currentCKDStage         CKDStage?
+  currentComplaints       String[] // Array of complaints
+  comorbidities           String[] // Array of comorbidities
+
+  // CKD Stage 5 - Dialysis Information
+  isDialysisInitiated        Boolean? @default(false)
+  dialysisNotInitiatedReason String?  @db.Text
+
+  // CKD Stage 4 - Preemptive Transplant
+  isPreemptiveTransplantDiscussed Boolean? @default(false)
+
+  // CKD Stage 5 - Transplant Evaluation
+  isTransplantEvaluationInitiated Boolean?        @default(false)
+  transplantType                  TransplantType?
+  transplantNotInitiatedReason    String?         @db.Text
+
+  // Physical Examination
+  height           Float? // in cm
+  heightSDS        Float? // Standard Deviation Score
+  weight           Float? // in kg
+  bmi              Float? // calculated
+  bmiSDS           Float? // for height age
+  systolicBP       Int? // mmHg
+  diastolicBP      Int? // mmHg
+  sbpPercentile    Float? // for < 13 years
+  dbpPercentile    Float? // for < 13 years
+  bpClassification BPClassification?
+  growthPercentile GrowthPercentile?
+  tannerStage      TannerStage?
+
+  // Laboratory Investigations (Mandatory fields marked with *)
+  serumCreatinine     Float? // *mandatory - mg/dL
+  serumUrea           Float? // *mandatory - mg/dL
+  eGFR                Float? // *mandatory - calculated
+  proteinuriaDipstick ProteinuriaLevel?
+  hemoglobin          Float? // *mandatory - g/dL
+  sodium              Float? // *mandatory - mEq/L
+  potassium           Float? // *mandatory - mEq/L
+  chloride            Float? // mEq/L
+  bicarbonate         Float? // *mandatory - mEq/L
+  calcium             Float? // *mandatory - mg/dL
+  phosphorus          Float? // *mandatory - mg/dL
+  vitaminD            Float? // *mandatory - ng/mL
+  ironLevel           Float? // μg/dL
+  ferritin            Float? // ng/mL
+  pth                 Float? // pg/mL
+  alp                 Float? // U/L
+  uricAcid            Float? // mg/dL
+
+  // Other Imaging and Tests
+  otherImaging String? @db.Text // Free text for ECHO, USG/KUB, MCU, DMSA, UDS, MRI
+  geneticTests String? @db.Text // Free text for genetic test results
+
+  status    Int      @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  institute         Institute           @relation(fields: [instituteId], references: [id])
+  adverseEvents     AdverseEvent[]
+  dataEntries       DataEntry[]
+  address           PatientAddress?
+  enrollments       PatientEnrollment[]
+  consentDocuments  InformedConsent[]
+  medications       PatientMedication[]
+  followUps         PatientFollowUp[]
+  dialysisRecords   PatientDialysis[]
+  calculatorResults CalculatorResult[]
+  patientExit       PatientExit?
+}
+
+model PatientAddress {
+  id         String   @id @default(uuid()) @db.Uuid
+  patientId  String   @unique @db.Uuid
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  country    String
+  postalCode String
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
+  patient    Patient  @relation(fields: [patientId], references: [id])
+}
+
+model InformedConsent {
+  id               String              @id @default(uuid()) @db.Uuid
+  patientId        String              @db.Uuid
+  documentType     ConsentDocumentType
+  fileName         String              @db.VarChar(255)
+  originalFileName String              @db.VarChar(255)
+
+  // AWS S3 Storage
+  s3Key         String @db.VarChar(500)
+  s3Url         String @db.VarChar(1000)
+  cloudFrontUrl String @db.VarChar(1000)
+
+  // Legacy field (keeping for backward compatibility)
+  filePath String? @db.VarChar(500)
+
+  fileSize Int
+  mimeType String @db.VarChar(100)
+
+  // Document metadata
+  documentTitle       String? @db.VarChar(255)
+  documentDescription String? @db.Text
+  version             String? @db.VarChar(20)
+
+  // Consent specific fields
+  consentStatus    ConsentStatus @default(PENDING)
+  obtainedDate     DateTime?     @db.Date
+  expiryDate       DateTime?     @db.Date
+  witnessName      String?       @db.VarChar(255)
+  witnessSignature String?       @db.VarChar(500) // Path to witness signature file
+
+  // Ethics approval fields
+  ethicsCommittee String?   @db.VarChar(255)
+  approvalNumber  String?   @db.VarChar(100)
+  approvalDate    DateTime? @db.Date
+
+  // Audit fields
+  uploadedById String    @db.Uuid
+  verifiedById String?   @db.Uuid
+  verifiedAt   DateTime? @db.Timestamptz(6)
+
+  status    Int      @default(1) // Active = 1, Inactive = 0
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  patient    Patient @relation(fields: [patientId], references: [id])
+  uploadedBy User    @relation("ConsentUploader", fields: [uploadedById], references: [id])
+  verifiedBy User?   @relation("ConsentVerifier", fields: [verifiedById], references: [id])
+}
+
+model PatientMedication {
+  id                    String                @id @default(uuid()) @db.Uuid
+  patientId             String                @db.Uuid
+  genericName           String                @db.VarChar(255)
+  frequency             MedicationFrequency
+  routeOfAdministration RouteOfAdministration
+  meanDosePerDay        Float? // mg or units per day
+  startDate             DateTime              @db.Date
+  stopDate              DateTime?             @db.Date // null if ongoing
+
+  status    Int      @default(1) // Active = 1, Inactive = 0
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  patient Patient @relation(fields: [patientId], references: [id])
+}
+
+model PatientFollowUp {
+  id           String   @id @default(uuid()) @db.Uuid
+  patientId    String   @db.Uuid
+  followUpDate DateTime @db.Date
+  visitNumber  Int // Sequential visit number
+
+  // 1. Socioeconomic and Demographic Updates
+  hasSocioeconomicChanges  Boolean  @default(false)
+  hasResidenceChange       Boolean? @default(false)
+  hasContactChange         Boolean? @default(false)
+  hasIncomeChange          Boolean? @default(false)
+  hasEducationStatusChange Boolean? @default(false)
+  hasPaymentStatusChange   Boolean? @default(false)
+
+  // Updated socioeconomic fields (only if changes occurred)
+  newFamilyIncome            FamilyIncomeRange?
+  newPaymentMode             PaymentMode?
+  newHasHealthInsurance      Boolean?
+  newInsuranceType           InsuranceType?
+  newInsuranceProvider       String?            @db.VarChar(200)
+  newMotherEducationLevel    EducationLevel?
+  newFatherEducationLevel    EducationLevel?
+  newPrimaryCaregiver        PrimaryCaregiver?
+  newEarningMembersCount     Int?
+  newPrimaryEarnerOccupation Occupation?
+  newDependentsCount         Int?
+
+  // Contact updates
+  newGuardianName         String? @db.VarChar(200)
+  newGuardianPhone        String? @db.VarChar(20)
+  newGuardianEmail        String? @db.VarChar(255)
+  newGuardianRelationship String? @db.VarChar(50)
+
+  // 2. Clinical History and CKD Updates
+  currentCKDStage CKDStage?
+
+  // CKD Stage 5 - Dialysis Status Update
+  isDialysisInitiated        Boolean? @default(false)
+  dialysisNotInitiatedReason String?  @db.Text
+
+  // New symptoms since last visit
+  newSymptomsSinceLastVisit String[] // Array of new symptoms
+
+  // Structured Comorbidity Status Checklist
+  hasHypertension       Boolean? @default(false)
+  hasGrowthFailure      Boolean? @default(false)
+  hasAnemia             Boolean? @default(false)
+  hasBoneMineralDisease Boolean? @default(false)
+  hasMetabolicAcidosis  Boolean? @default(false)
+  otherComorbidities    String[] // Additional comorbidities
+
+  // Hospitalization tracking
+  hasHospitalizationSinceLastVisit Boolean? @default(false)
+  hospitalizationDetails           String?  @db.Text // Dates and details
+
+  // 3. Physical Examination Updates
+  currentHeight           Float? // in cm
+  currentHeightSDS        Float? // Standard Deviation Score
+  currentWeight           Float? // in kg
+  currentBMI              Float? // calculated
+  currentBMISDS           Float? // for height age
+  currentSystolicBP       Int? // mmHg
+  currentDiastolicBP      Int? // mmHg
+  currentSBPPercentile    Float? // for < 13 years
+  currentDBPPercentile    Float? // for < 13 years
+  currentBPClassification BPClassification?
+  currentTannerStage      TannerStage?
+
+  // 4. Laboratory Investigations (Follow-up)
+  followUpSerumCreatinine     Float? // *mandatory - mg/dL
+  followUpSerumUrea           Float? // *mandatory - mg/dL
+  followUpEGFR                Float? // *mandatory - calculated
+  followUpProteinuriaDipstick ProteinuriaLevel?
+  followUpHemoglobin          Float? // *mandatory - g/dL
+  followUpSodium              Float? // *mandatory - mEq/L
+  followUpPotassium           Float? // *mandatory - mEq/L
+  followUpChloride            Float? // mEq/L
+  followUpBicarbonate         Float? // *mandatory - mEq/L
+  followUpCalcium             Float? // *mandatory - mg/dL
+  followUpPhosphorus          Float? // *mandatory - mg/dL
+  followUpVitaminD            Float? // *mandatory - ng/mL
+  followUpIronLevel           Float? // μg/dL
+  followUpFerritin            Float? // ng/mL
+  followUpPTH                 Float? // pg/mL
+  followUpALP                 Float? // U/L
+  followUpUricAcid            Float? // mg/dL
+
+  // Follow-up Imaging and Tests
+  followUpOtherImaging String? @db.Text // ECHO, USG/KUB, MCU, DMSA, UDS, MRI
+  followUpGeneticTests String? @db.Text // Genetic test results
+
+  // 5. Medication Adherence
+  overallMedicationAdherence   Boolean? @default(true)
+  adherenceNonComplianceReason String?  @db.Text // Reason for non-adherence
+
+  // Clinical notes for this visit
+  clinicalNotes    String?   @db.Text
+  nextFollowUpDate DateTime? @db.Date
+
+  status    Int      @default(1) // Active = 1, Inactive = 0
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  patient             Patient              @relation(fields: [patientId], references: [id])
+  followUpMedications FollowUpMedication[]
+}
+
+model FollowUpMedication {
+  id                    String                @id @default(uuid()) @db.Uuid
+  followUpId            String                @db.Uuid
+  genericName           String                @db.VarChar(255)
+  frequency             MedicationFrequency
+  routeOfAdministration RouteOfAdministration
+  meanDosePerDay        Float? // mg or units per day
+  startDate             DateTime              @db.Date
+  stopDate              DateTime?             @db.Date // null if ongoing
+  isNewMedication       Boolean               @default(false) // New since last visit
+  isDiscontinued        Boolean               @default(false) // Discontinued since last visit
+  adherence             Boolean?              @default(true) // Patient adherent to this medication
+  adherenceNotes        String?               @db.Text // Specific adherence notes
+
+  status    Int      @default(1) // Active = 1, Inactive = 0
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  followUp PatientFollowUp @relation(fields: [followUpId], references: [id])
+}
+
+model PatientDialysis {
+  id                String   @id @default(uuid()) @db.Uuid
+  patientId         String   @db.Uuid
+  dialysisStartDate DateTime @db.Date
+  isActive          Boolean  @default(true) // Current dialysis status
+
+  // Initial Dialysis Setup
+  initialDialysisModality DialysisModality
+
+  // HD Access Information
+  hdAccessType              HDAccessType?
+  hdAccessCreationDate      DateTime?     @db.Date
+  hdAccessComplicationNotes String?       @db.Text
+
+  // PD Access Information
+  pdCatheterType              PDCatheterType?
+  pdCatheterInsertionDate     DateTime?       @db.Date
+  pdCatheterComplicationNotes String?         @db.Text
+
+  // Initial HD Prescription (if HD)
+  hdFrequencyPerWeek     Int? // Sessions per week
+  hdSessionDurationHours Float? // Hours per session
+  hdBloodFlowRate        Int? // mL/min
+  hdDialysateFlowRate    Int? // mL/min
+  hdUltrafiltrationGoal  Float? // Liters
+  hdDialyzerType         String? @db.VarChar(100)
+  hdAnticoagulation      String? @db.VarChar(100)
+  hdVascularAccess       String? @db.VarChar(100)
+
+  // Initial PD Prescription (if PD)
+  pdModalityType          PDModalityType? // CAPD, CCPD, etc.
+  pdFillVolume            Int? // mL per exchange
+  pdDwellTime             Int? // Minutes
+  pdExchangesPerDay       Int? // Number of exchanges
+  pdGlucoseConcentration  PDGlucoseConcentration?
+  pdAdditionalMedications String?                 @db.Text
+  pdCyclerSettings        String?                 @db.Text // For automated PD
+
+  // Initial Complications
+  initialComplications     DialysisComplication[]
+  initialComplicationNotes String?                @db.Text
+
+  // Payment Information
+  paymentMethod      DialysisPaymentMethod?
+  monthlyCostSelfPay Float? // If self-pay
+  insuranceCoverage  String?                @db.VarChar(200)
+
+  // Clinical Notes
+  clinicalNotes String? @db.Text
+
+  status    Int      @default(1) // Active = 1, Inactive = 0
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  patient   Patient            @relation(fields: [patientId], references: [id])
+  followUps DialysisFollowUp[]
+}
+
+model DialysisFollowUp {
+  id           String   @id @default(uuid()) @db.Uuid
+  dialysisId   String   @db.Uuid
+  followUpDate DateTime @db.Date
+  visitNumber  Int // Sequential visit number for this dialysis record
+
+  // Current Modality
+  currentModality      DialysisModality
+  hasModalityChange    Boolean          @default(false)
+  modalityChangeDate   DateTime?        @db.Date
+  modalityChangeReason String?          @db.Text
+
+  // HD Prescription Updates (if current modality is HD)
+  hdFrequencyPerWeek     Int?
+  hdSessionDurationHours Float?
+  hdBloodFlowRate        Int?
+  hdDialysateFlowRate    Int?
+  hdUltrafiltrationGoal  Float?
+  hdDialyzerType         String? @db.VarChar(100)
+  hdAnticoagulation      String? @db.VarChar(100)
+  hdVascularAccess       String? @db.VarChar(100)
+  hdKtV                  Float? // Dialysis adequacy measure
+  hdURR                  Float? // Urea Reduction Ratio
+
+  // PD Prescription Updates (if current modality is PD)
+  pdModalityType          PDModalityType?
+  pdFillVolume            Int?
+  pdDwellTime             Int?
+  pdExchangesPerDay       Int?
+  pdGlucoseConcentration  PDGlucoseConcentration?
+  pdAdditionalMedications String?                 @db.Text
+  pdCyclerSettings        String?                 @db.Text
+  pdWeeklyKtV             Float? // PD adequacy measure
+  pdCreatinineClearance   Float? // L/week/1.73m²
+
+  // Complications Since Last Visit
+  newComplications  DialysisComplication[]
+  complicationNotes String?                @db.Text
+
+  // Access-Related Issues
+  accessProblems              Boolean @default(false)
+  accessProblemDescription    String? @db.Text
+  accessInterventionsRequired Boolean @default(false)
+  accessInterventionDetails   String? @db.Text
+
+  // Payment Updates
+  currentPaymentMethod      DialysisPaymentMethod?
+  currentMonthlyCostSelfPay Float?
+  paymentMethodChanged      Boolean                @default(false)
+
+  // Laboratory Results (Dialysis-Specific)
+  preDialysisWeight         Float? // kg
+  postDialysisWeight        Float? // kg
+  weightGain                Float? // kg
+  bloodPressurePreDialysis  String? @db.VarChar(20) // "120/80"
+  bloodPressurePostDialysis String? @db.VarChar(20)
+
+  // Quality of Life Assessment
+  functionalStatus   FunctionalStatus?
+  qualityOfLifeScore Int? // 1-10 scale
+
+  // Clinical Assessment
+  clinicalNotes    String?   @db.Text
+  nextFollowUpDate DateTime? @db.Date
+
+  status    Int      @default(1) // Active = 1, Inactive = 0
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  dialysis PatientDialysis @relation(fields: [dialysisId], references: [id])
+}
+
+model DashboardCache {
+  id          String             @id @default(uuid()) @db.Uuid
+  instituteId String?            @db.Uuid // null for global stats
+  cacheKey    String             @db.VarChar(255)
+  cacheType   DashboardCacheType
+  data        Json // Cached dashboard data
+  lastUpdated DateTime           @default(now()) @db.Timestamptz(6)
+  expiresAt   DateTime           @db.Timestamptz(6)
+
+  status    Int      @default(1) // Active = 1, Inactive = 0
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  @@unique([instituteId, cacheKey])
+}
+
+model DataExportRequest {
+  id           String         @id @default(uuid()) @db.Uuid
+  userId       String         @db.Uuid
+  instituteId  String         @db.Uuid
+  exportType   ExportDataType
+  exportFormat ExportFormat
+  filters      Json? // Export filters
+  fileName     String         @db.VarChar(255)
+  filePath     String?        @db.VarChar(500)
+  fileSize     Int? // File size in bytes
+  status       ExportStatus
+  downloadUrl  String?        @db.VarChar(500)
+  expiresAt    DateTime?      @db.Timestamptz(6)
+  errorMessage String?        @db.Text
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id])
+  institute Institute @relation(fields: [instituteId], references: [id])
+}
+
+model CalculatorResult {
+  id              String         @id @default(uuid()) @db.Uuid
+  patientId       String?        @db.Uuid // Optional - can be used without patient
+  userId          String         @db.Uuid
+  calculatorType  CalculatorType
+  inputParameters Json // Calculator inputs
+  result          Json // Calculator results
+  interpretation  String?        @db.Text
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  patient Patient? @relation(fields: [patientId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+}
+
+model PatientExit {
+  id        String    @id @default(uuid()) @db.Uuid
+  patientId String    @unique @db.Uuid // One exit per patient
+  exitDate  DateTime  @db.Date
+  exitCause ExitCause
+
+  // Death Details (if exitCause = DEATH)
+  deathDetails PatientDeath?
+
+  // Loss to Follow-up Details (if exitCause = LOSS_TO_FOLLOWUP)
+  lossToFollowUpDetails PatientLossToFollowUp?
+
+  // Transplant Details (if exitCause = KIDNEY_TRANSPLANT)
+  transplantDetails PatientTransplant?
+
+  // General exit information
+  exitNotes        String?   @db.Text
+  reportedBy       String    @db.Uuid // User who reported the exit
+  verifiedBy       String?   @db.Uuid // User who verified the exit
+  verificationDate DateTime? @db.Timestamptz(6)
+
+  status    Int      @default(1) // Active = 1, Inactive = 0
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  patient        Patient @relation(fields: [patientId], references: [id])
+  reportedByUser User    @relation("ExitReportedBy", fields: [reportedBy], references: [id])
+  verifiedByUser User?   @relation("ExitVerifiedBy", fields: [verifiedBy], references: [id])
+}
+
+model PatientDeath {
+  id            String @id @default(uuid()) @db.Uuid
+  patientExitId String @unique @db.Uuid
+
+  // Death Details
+  dateOfDeath  DateTime     @db.Date
+  timeOfDeath  String?      @db.VarChar(10) // "14:30" format
+  placeOfDeath PlaceOfDeath
+  hospitalName String?      @db.VarChar(255) // If died in hospital
+
+  // Cause of Death
+  primaryCauseOfDeath   CauseOfDeath
+  secondaryCauseOfDeath CauseOfDeath?
+  immediateCareCause    String?       @db.Text // Immediate cause leading to death
+  underlyingCause       String?       @db.Text // Underlying disease/condition
+
+  // CKD-Related Death Details
+  isCKDRelated         Boolean               @default(false)
+  ckdRelatedCause      CKDDeathCause?
+  dialysisRelated      Boolean               @default(false)
+  dialysisComplication DialysisComplication?
+
+  // Cardiovascular Death (common in CKD)
+  isCardiovascular    Boolean                   @default(false)
+  cardiovascularCause CardiovascularDeathCause?
+
+  // Infection-Related Death
+  isInfectionRelated Boolean        @default(false)
+  infectionType      InfectionType?
+  infectionSite      String?        @db.VarChar(255)
+
+  // Autopsy Information
+  autopsyPerformed Boolean @default(false)
+  autopsyFindings  String? @db.Text
+
+  // Death Certificate
+  deathCertificateNumber String? @db.VarChar(100)
+  certifyingPhysician    String? @db.VarChar(255)
+
+  // Family/Guardian Information
+  informedFamily      Boolean   @default(true)
+  familyContactDate   DateTime? @db.Date
+  familyContactPerson String?   @db.VarChar(255)
+
+  // Additional Details
+  clinicalNotes String? @db.Text
+
+  status    Int      @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  patientExit PatientExit @relation(fields: [patientExitId], references: [id])
+}
+
+model PatientLossToFollowUp {
+  id            String @id @default(uuid()) @db.Uuid
+  patientExitId String @unique @db.Uuid
+
+  // Loss to Follow-up Details
+  lastContactDate DateTime @db.Date
+  lastVisitDate   DateTime @db.Date
+  durationOfLoss  Int // Days since last contact
+
+  // Contact Attempts (Prevention Checklist)
+  phoneCallAttempts Int      @default(0)
+  phoneCallDates    String[] // Array of attempt dates
+  phoneCallOutcomes String[] // Array of outcomes
+
+  smsAttempts       Int      @default(0)
+  smsDates          String[] // Array of SMS dates
+  smsDeliveryStatus String[] // Array of delivery statuses
+
+  emailAttempts       Int      @default(0)
+  emailDates          String[] // Array of email dates
+  emailDeliveryStatus String[] // Array of delivery statuses
+
+  homeVisitAttempts Int      @default(0)
+  homeVisitDates    String[] // Array of visit dates
+  homeVisitOutcomes String[] // Array of outcomes
+
+  letterAttempts       Int      @default(0)
+  letterDates          String[] // Array of letter dates
+  letterDeliveryStatus String[] // Array of delivery statuses
+
+  // Contact Person Attempts
+  emergencyContactAttempts Int      @default(0)
+  emergencyContactDates    String[] // Array of attempt dates
+  emergencyContactOutcomes String[] // Array of outcomes
+
+  // Reasons for Loss to Follow-up
+  suspectedReasons      LossToFollowUpReason[]
+  familyReportedReasons String?                @db.Text
+
+  // Geographic/Social Factors
+  hasRelocated      Boolean @default(false)
+  newLocation       String? @db.VarChar(255)
+  hasChangedContact Boolean @default(false)
+
+  // Financial Factors
+  financialConstraints Boolean @default(false)
+  transportationIssues Boolean @default(false)
+
+  // Medical Factors
+  improvedCondition       Boolean @default(false)
+  seekingAlternativeCare  Boolean @default(false)
+  alternativeCareProvider String? @db.VarChar(255)
+
+  // Prevention Checklist Completion
+  checklistCompletedBy    String   @db.Uuid // User who completed checklist
+  checklistCompletionDate DateTime @db.Date
+
+  // Follow-up Actions
+  referredToSocialWorker Boolean @default(false)
+  socialWorkerNotes      String? @db.Text
+
+  // Final Classification
+  finalClassification LossToFollowUpClassification
+
+  // Additional Notes
+  clinicalNotes String? @db.Text
+
+  status    Int      @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  patientExit              PatientExit @relation(fields: [patientExitId], references: [id])
+  checklistCompletedByUser User        @relation("LossToFollowUpChecklist", fields: [checklistCompletedBy], references: [id])
+}
+
+model PatientTransplant {
+  id            String @id @default(uuid()) @db.Uuid
+  patientExitId String @unique @db.Uuid
+
+  // Transplant Achievement Details
+  transplantDate DateTime       @db.Date
+  transplantType TransplantType
+
+  // Donor Information
+  donorType         DonorType
+  donorAge          Int? // Age of donor
+  donorGender       Gender?
+  donorRelationship DonorRelationship? // If living donor
+
+  // Living Donor Details (if applicable)
+  livingDonorName    String?   @db.VarChar(255)
+  livingDonorContact String?   @db.VarChar(20)
+  donorWorkup        Boolean?  @default(false)
+  donorWorkupDate    DateTime? @db.Date
+  donorCompatibility String?   @db.Text
+
+  // Deceased Donor Details (if applicable)
+  donorOrganizationName       String?   @db.VarChar(255)
+  waitingListDuration         Int? // Days on waiting list
+  waitingListRegistrationDate DateTime? @db.Date
+
+  // Transplant Center Information
+  transplantCenter      String  @db.VarChar(255)
+  transplantCenterCity  String  @db.VarChar(100)
+  transplantCenterState String  @db.VarChar(100)
+  surgeonName           String? @db.VarChar(255)
+
+  // Pre-Transplant Assessment
+  preTransplantEGFR     Float? // mL/min/1.73m²
+  preTransplantDialysis Boolean @default(false)
+  dialysisDuration      Int? // Months on dialysis
+  preemptiveTransplant  Boolean @default(false)
+
+  // Transplant Procedure Details
+  surgeryDuration  Float? // Hours
+  coldIschemiaTime Float? // Hours
+  warmIschemiaTime Float? // Minutes
+
+  // Immunosuppression Protocol
+  inductionTherapy             String? @db.Text
+  maintenanceImmunosuppression String? @db.Text
+
+  // Early Outcomes (30 days)
+  immediateGraftFunction GraftFunction
+  delayedGraftFunction   Boolean       @default(false)
+  acuteRejectionEpisodes Int           @default(0)
+
+  // Complications
+  surgicalComplications String[] // Array of complications
+  medicalComplications  String[] // Array of complications
+
+  // Follow-up Plan
+  followUpCenter    String? @db.VarChar(255)
+  followUpPhysician String? @db.VarChar(255)
+  followUpContact   String? @db.VarChar(20)
+
+  // Transition Details
+  registryTransitionDate DateTime? @db.Date
+  newRegistryName        String?   @db.VarChar(255)
+  dataTransferCompleted  Boolean   @default(false)
+
+  // Additional Information
+  transplantNotes          String? @db.Text
+  familyEducationCompleted Boolean @default(false)
+
+  status    Int      @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  patientExit PatientExit @relation(fields: [patientExitId], references: [id])
+}
+
+model ClinicalTrial {
+  id                      String               @id @default(uuid()) @db.Uuid
+  trialId                 String               @unique @db.VarChar(50)
+  title                   String               @db.VarChar(500)
+  description             String
+  phase                   TrialPhase
+  status                  TrialStatus          @default(PLANNING)
+  startDate               DateTime?            @db.Date
+  endDate                 DateTime?            @db.Date
+  targetEnrollment        Int
+  currentEnrollment       Int                  @default(0)
+  principalInvestigatorId String               @db.Uuid
+  createdById             String               @db.Uuid
+  createdAt               DateTime             @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime             @updatedAt @db.Timestamptz(6)
+  adverseEvents           AdverseEvent[]
+  createdBy               User                 @relation("TrialAssignee", fields: [createdById], references: [id])
+  principalInvestigator   User                 @relation("TrialCreator", fields: [principalInvestigatorId], references: [id])
+  complianceReports       ComplianceReport[]
+  dataCollectionForms     DataCollectionForm[]
+  enrollments             PatientEnrollment[]
+  protocol                TrialProtocol?
+}
+
+model TrialProtocol {
+  id                 String        @id @default(uuid()) @db.Uuid
+  trialId            String        @unique @db.Uuid
+  protocolNumber     String        @unique @db.VarChar(50)
+  version            String        @db.VarChar(20)
+  title              String        @db.VarChar(500)
+  objectives         String
+  methodology        String
+  inclusionCriteria  String
+  exclusionCriteria  String
+  endpoints          String
+  statisticalPlan    String
+  ethicsApproval     Boolean       @default(false)
+  regulatoryApproval Boolean       @default(false)
+  createdAt          DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime      @updatedAt @db.Timestamptz(6)
+  trial              ClinicalTrial @relation(fields: [trialId], references: [id])
+}
+
+model PatientEnrollment {
+  id               String           @id @default(uuid()) @db.Uuid
+  patientId        String           @db.Uuid
+  trialId          String           @db.Uuid
+  enrolledById     String           @db.Uuid
+  enrollmentDate   DateTime         @db.Date
+  status           EnrollmentStatus @default(ENROLLED)
+  randomizationId  String?          @db.VarChar(50)
+  studyGroup       String?          @db.VarChar(100)
+  withdrawalDate   DateTime?        @db.Date
+  withdrawalReason String?
+  createdAt        DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime         @updatedAt @db.Timestamptz(6)
+  enrolledBy       User             @relation(fields: [enrolledById], references: [id])
+  patient          Patient          @relation(fields: [patientId], references: [id])
+  trial            ClinicalTrial    @relation(fields: [trialId], references: [id])
+
+  @@unique([patientId, trialId])
+}
+
+model DataCollectionForm {
+  id          String        @id @default(uuid()) @db.Uuid
+  trialId     String        @db.Uuid
+  formName    String        @db.VarChar(255)
+  description String?
+  formSchema  Json
+  version     String        @db.VarChar(20)
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime      @updatedAt @db.Timestamptz(6)
+  trial       ClinicalTrial @relation(fields: [trialId], references: [id])
+  dataEntries DataEntry[]
+}
+
+model DataEntry {
+  id          String             @id @default(uuid()) @db.Uuid
+  formId      String             @db.Uuid
+  patientId   String             @db.Uuid
+  enteredById String             @db.Uuid
+  data        Json
+  entryDate   DateTime           @db.Date
+  status      DataEntryStatus    @default(DRAFT)
+  reviewedBy  String?            @db.Uuid
+  reviewDate  DateTime?          @db.Timestamptz(6)
+  comments    String?
+  createdAt   DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime           @updatedAt @db.Timestamptz(6)
+  enteredBy   User               @relation(fields: [enteredById], references: [id])
+  form        DataCollectionForm @relation(fields: [formId], references: [id])
+  patient     Patient            @relation(fields: [patientId], references: [id])
+}
+
+model AdverseEvent {
+  id                 String             @id @default(uuid()) @db.Uuid
+  trialId            String             @db.Uuid
+  patientId          String             @db.Uuid
+  reportedById       String             @db.Uuid
+  eventType          String             @db.VarChar(255)
+  description        String
+  severity           EventSeverity
+  seriousness        EventSeriousness
+  relationship       String             @db.VarChar(255)
+  onsetDate          DateTime           @db.Date
+  resolutionDate     DateTime?          @db.Date
+  outcome            EventOutcome?
+  reportDate         DateTime           @db.Date
+  status             AdverseEventStatus @default(REPORTED)
+  regulatoryReported Boolean            @default(false)
+  followUpRequired   Boolean            @default(false)
+  createdAt          DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime           @updatedAt @db.Timestamptz(6)
+  patient            Patient            @relation(fields: [patientId], references: [id])
+  reportedBy         User               @relation(fields: [reportedById], references: [id])
+  trial              ClinicalTrial      @relation(fields: [trialId], references: [id])
+}
+
+model ComplianceReport {
+  id              String           @id @default(uuid()) @db.Uuid
+  trialId         String           @db.Uuid
+  reportType      ComplianceType
+  reportPeriod    String           @db.VarChar(100)
+  generatedById   String           @db.Uuid
+  reportData      Json
+  findings        String?
+  recommendations String?
+  status          ComplianceStatus @default(DRAFT)
+  submissionDate  DateTime?        @db.Date
+  approvalDate    DateTime?        @db.Date
+  createdAt       DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @db.Timestamptz(6)
+  generatedBy     User             @relation(fields: [generatedById], references: [id])
+  trial           ClinicalTrial    @relation(fields: [trialId], references: [id])
+}
+
+model DataExport {
+  id            String       @id @default(uuid()) @db.Uuid
+  requestedById String       @db.Uuid
+  exportType    ExportType
+  filters       Json
+  format        ExportFormat
+  status        ExportStatus @default(PENDING)
+  filePath      String?      @db.VarChar(500)
+  fileSize      Int?
+  recordCount   Int?
+  requestDate   DateTime     @default(now()) @db.Timestamptz(6)
+  completedDate DateTime?    @db.Timestamptz(6)
+  expiryDate    DateTime?    @db.Timestamptz(6)
+  createdAt     DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime     @updatedAt @db.Timestamptz(6)
+  requestedBy   User         @relation(fields: [requestedById], references: [id])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @db.Uuid
+  action     String   @db.VarChar(255)
+  entityType String   @db.VarChar(100)
+  entityId   String   @db.Uuid
+  oldValues  Json?
+  newValues  Json?
+  ipAddress  String?  @db.VarChar(45)
+  userAgent  String?  @db.VarChar(500)
+  timestamp  DateTime @default(now()) @db.Timestamptz(6)
+  user       User?    @relation(fields: [userId], references: [id])
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  INSTITUTE_ADMIN
+  ADMIN
+  DATA_ENTRY
+}
+
+enum InstituteStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  UNKNOWN
+}
+
+enum TrialPhase {
+  PRECLINICAL
+  PHASE_I
+  PHASE_II
+  PHASE_III
+  PHASE_IV
+}
+
+enum TrialStatus {
+  PLANNING
+  ACTIVE
+  RECRUITING
+  SUSPENDED
+  COMPLETED
+  TERMINATED
+}
+
+enum EnrollmentStatus {
+  ENROLLED
+  WITHDRAWN
+  COMPLETED
+  SCREEN_FAILED
+}
+
+enum DataEntryStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+  APPROVED
+  REJECTED
+}
+
+enum EventSeverity {
+  MILD
+  MODERATE
+  SEVERE
+  LIFE_THREATENING
+}
+
+enum EventSeriousness {
+  NON_SERIOUS
+  SERIOUS
+}
+
+enum EventOutcome {
+  RECOVERED
+  RECOVERING
+  NOT_RECOVERED
+  RECOVERED_WITH_SEQUELAE
+  FATAL
+  UNKNOWN
+}
+
+enum AdverseEventStatus {
+  REPORTED
+  UNDER_REVIEW
+  INVESTIGATED
+  CLOSED
+}
+
+enum ComplianceType {
+  PROTOCOL_DEVIATION
+  REGULATORY_COMPLIANCE
+  DATA_QUALITY
+  SAFETY_REPORTING
+  AUDIT_FINDINGS
+}
+
+enum ComplianceStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum ExportType {
+  PATIENT_DATA
+  TRIAL_DATA
+  ADVERSE_EVENTS
+  COMPLIANCE_REPORT
+  AUDIT_LOG
+}
+
+enum ExportFormat {
+  CSV
+  JSON
+  XML
+  PDF
+}
+
+enum ExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+
+enum ConsentStatus {
+  PENDING
+  OBTAINED
+  DECLINED
+  EXPIRED
+  WITHDRAWN
+}
+
+enum ConsentType {
+  INFORMED_CONSENT
+  ASSENT
+  PARENTAL_CONSENT
+  GUARDIAN_CONSENT
+  RESEARCH_CONSENT
+  TREATMENT_CONSENT
+}
+
+enum ConsentDocumentType {
+  CONSENT_FORM
+  ASSENT_FORM
+  ETHICS_APPROVAL
+  WITNESS_SIGNATURE
+  PARENTAL_CONSENT
+  GUARDIAN_CONSENT
+  AMENDMENT
+  WITHDRAWAL_FORM
+}
+
+enum EducationLevel {
+  NO_FORMAL_EDUCATION
+  PRIMARY_INCOMPLETE
+  PRIMARY_COMPLETE
+  SECONDARY_INCOMPLETE
+  SECONDARY_COMPLETE
+  HIGHER_SECONDARY_INCOMPLETE
+  HIGHER_SECONDARY_COMPLETE
+  DIPLOMA
+  UNDERGRADUATE_INCOMPLETE
+  UNDERGRADUATE_COMPLETE
+  POSTGRADUATE_INCOMPLETE
+  POSTGRADUATE_COMPLETE
+  DOCTORAL
+  PROFESSIONAL_DEGREE
+}
+
+enum PrimaryCaregiver {
+  MOTHER
+  FATHER
+  BOTH_PARENTS
+  GRANDMOTHER
+  GRANDFATHER
+  AUNT
+  UNCLE
+  SIBLING
+  SPOUSE
+  OTHER_RELATIVE
+  NON_RELATIVE
+  SELF
+}
+
+enum Occupation {
+  UNEMPLOYED
+  STUDENT
+  HOMEMAKER
+  FARMER
+  LABORER
+  SKILLED_WORKER
+  SMALL_BUSINESS_OWNER
+  GOVERNMENT_EMPLOYEE
+  PRIVATE_EMPLOYEE
+  PROFESSIONAL
+  RETIRED
+  DISABLED
+  OTHER
+}
+
+enum FamilyIncomeRange {
+  BELOW_50000
+  RANGE_50000_100000
+  RANGE_100000_200000
+  RANGE_200000_500000
+  RANGE_500000_1000000
+  ABOVE_1000000
+  PREFER_NOT_TO_SAY
+}
+
+enum PaymentMode {
+  OUT_OF_POCKET
+  HEALTH_INSURANCE
+  GOVERNMENT_SCHEME
+  EMPLOYER_COVERAGE
+  COMBINATION
+  OTHER
+}
+
+enum InsuranceType {
+  GOVERNMENT_INSURANCE
+  PRIVATE_INSURANCE
+  EMPLOYER_INSURANCE
+  FAMILY_INSURANCE
+  MEDICLAIM
+  HEALTH_SAVINGS_ACCOUNT
+  OTHER
+}
+
+enum PrimaryRenalDiagnosis {
+  CONGENITAL_ANOMALIES_URINARY_TRACT
+  HEREDITARY_NEPHRITIS
+  GLOMERULAR_DISEASE_PRIMARY
+  GLOMERULAR_DISEASE_SECONDARY
+  TUBULOINTERSTITIAL_DISEASE
+  CYSTIC_KIDNEY_DISEASE
+  METABOLIC_DISORDERS
+  MALIGNANCY_RELATED
+  ISCHEMIC_NEPHROPATHY
+  HYPERTENSIVE_NEPHROPATHY
+  UNKNOWN_ETIOLOGY
+  OTHER
+}
+
+enum CKDStage {
+  STAGE_3A // eGFR 45-59
+  STAGE_3B // eGFR 30-44
+  STAGE_4 // eGFR 15-29
+  STAGE_5 // eGFR <15 or on dialysis
+}
+
+enum TransplantType {
+  LIVING_DONOR
+  DECEASED_DONOR
+  BOTH_DISCUSSED
+}
+
+enum BPClassification {
+  NORMAL
+  ELEVATED
+  STAGE_1_HTN
+  STAGE_2_HTN
+}
+
+enum GrowthPercentile {
+  BELOW_3RD
+  PERCENTILE_3_TO_10
+  PERCENTILE_10_TO_25
+  PERCENTILE_25_TO_50
+  PERCENTILE_50_TO_75
+  PERCENTILE_75_TO_90
+  PERCENTILE_90_TO_97
+  ABOVE_97TH
+}
+
+enum TannerStage {
+  STAGE_1
+  STAGE_2
+  STAGE_3
+  STAGE_4
+  STAGE_5
+}
+
+enum ProteinuriaLevel {
+  NEGATIVE
+  TRACE
+  PLUS_1
+  PLUS_2
+  PLUS_3
+  PLUS_4
+}
+
+enum MedicationFrequency {
+  ONCE_DAILY
+  TWICE_DAILY
+  THREE_TIMES_DAILY
+  FOUR_TIMES_DAILY
+  EVERY_OTHER_DAY
+  WEEKLY
+  MONTHLY
+  AS_NEEDED
+  OTHER
+}
+
+enum RouteOfAdministration {
+  ORAL
+  SUBCUTANEOUS_INJECTION
+  IV_INJECTION
+  INTRAMUSCULAR_INJECTION
+  TOPICAL
+  INHALATION
+  RECTAL
+  OTHER
+}
+
+enum DialysisModality {
+  HEMODIALYSIS
+  PERITONEAL_DIALYSIS
+}
+
+enum HDAccessType {
+  PERMCATH
+  AV_FISTULA
+  AV_GRAFT
+  TEMPORARY_HD_CATHETER
+  TUNNELED_CATHETER
+}
+
+enum PDCatheterType {
+  STRAIGHT_TENCKHOFF
+  COILED_TENCKHOFF
+  SWAN_NECK_CATHETER
+  PRESTERNAL_CATHETER
+  OTHER
+}
+
+enum PDModalityType {
+  CAPD // Continuous Ambulatory Peritoneal Dialysis
+  CCPD // Continuous Cycling Peritoneal Dialysis
+  APD // Automated Peritoneal Dialysis
+  NIPD // Nocturnal Intermittent Peritoneal Dialysis
+  TIDAL_PD // Tidal Peritoneal Dialysis
+}
+
+enum PDGlucoseConcentration {
+  GLUCOSE_1_5_PERCENT
+  GLUCOSE_2_5_PERCENT
+  GLUCOSE_4_25_PERCENT
+  ICODEXTRIN
+  AMINO_ACID_SOLUTION
+}
+
+enum DialysisComplication {
+  // HD Complications
+  HYPOTENSION
+  MUSCLE_CRAMPS
+  NAUSEA_VOMITING
+  HEADACHE
+  CHEST_PAIN
+  BACK_PAIN
+  ITCHING
+  ACCESS_INFECTION
+  ACCESS_THROMBOSIS
+  ACCESS_STENOSIS
+  ACCESS_BLEEDING
+  HEMOLYSIS
+  AIR_EMBOLISM
+  DISEQUILIBRIUM_SYNDROME
+
+  // PD Complications
+  PERITONITIS
+  EXIT_SITE_INFECTION
+  TUNNEL_INFECTION
+  CATHETER_MALFUNCTION
+  CATHETER_MIGRATION
+  FLUID_LEAK
+  HERNIA
+  HYDROTHORAX
+  HEMOPERITONEUM
+  BOWEL_PERFORATION
+
+  // General Complications
+  ELECTROLYTE_IMBALANCE
+  FLUID_OVERLOAD
+  INADEQUATE_DIALYSIS
+  PROTEIN_LOSS
+  MALNUTRITION
+  BONE_DISEASE
+  CARDIOVASCULAR_COMPLICATIONS
+  OTHER
+}
+
+enum DialysisPaymentMethod {
+  FREE_GOVERNMENT
+  FREE_NGO
+  HEALTH_INSURANCE
+  SELF_PAY
+  EMPLOYER_COVERAGE
+  COMBINATION
+  OTHER
+}
+
+enum FunctionalStatus {
+  NORMAL_ACTIVITY
+  RESTRICTED_ACTIVITY
+  CARE_FOR_SELF
+  LIMITED_SELF_CARE
+  DISABLED
+  BEDRIDDEN
+}
+
+enum DashboardCacheType {
+  CKD_STAGE_DISTRIBUTION
+  DEMOGRAPHIC_SUMMARY
+  DIALYSIS_PREVALENCE
+  REGIONAL_STATISTICS
+  COMORBIDITY_ANALYSIS
+  GROWTH_TRENDS
+  MEDICATION_USAGE
+  OUTCOME_METRICS
+}
+
+enum ExportDataType {
+  PATIENT_DEMOGRAPHICS
+  CLINICAL_DATA
+  DIALYSIS_DATA
+  FOLLOW_UP_DATA
+  MEDICATION_DATA
+  DASHBOARD_SUMMARY
+  COMPLETE_DATASET
+}
+
+enum CalculatorType {
+  EGFR_SCHWARTZ
+  EGFR_CKID
+  EGFR_BEDSIDE_SCHWARTZ
+  EGFR_CKD_EPI
+  BMI_Z_SCORE
+  HEIGHT_Z_SCORE
+  WEIGHT_Z_SCORE
+  BP_PERCENTILE
+  DIALYSIS_KTV
+  DIALYSIS_URR
+  GROWTH_VELOCITY
+  PROTEIN_INTAKE
+  FLUID_RESTRICTION
+}
+
+enum ExitCause {
+  DEATH
+  LOSS_TO_FOLLOWUP
+  KIDNEY_TRANSPLANT
+  TRANSFER_TO_ADULT_CARE
+  FAMILY_RELOCATION
+  IMPROVED_CONDITION
+  OTHER
+}
+
+enum PlaceOfDeath {
+  HOME
+  HOSPITAL
+  ICU
+  EMERGENCY_DEPARTMENT
+  HOSPICE
+  NURSING_HOME
+  OTHER
+}
+
+enum CauseOfDeath {
+  CARDIOVASCULAR
+  INFECTION
+  MALIGNANCY
+  ACCIDENT_TRAUMA
+  SUICIDE
+  RESPIRATORY_FAILURE
+  LIVER_FAILURE
+  NEUROLOGICAL
+  METABOLIC
+  UNKNOWN
+  OTHER
+}
+
+enum CKDDeathCause {
+  UREMIA
+  FLUID_OVERLOAD
+  ELECTROLYTE_IMBALANCE
+  BONE_DISEASE_COMPLICATIONS
+  GROWTH_FAILURE_COMPLICATIONS
+  ANEMIA_COMPLICATIONS
+  HYPERTENSION_COMPLICATIONS
+  METABOLIC_ACIDOSIS
+  OTHER
+}
+
+enum CardiovascularDeathCause {
+  MYOCARDIAL_INFARCTION
+  HEART_FAILURE
+  ARRHYTHMIA
+  STROKE
+  PULMONARY_EMBOLISM
+  HYPERTENSIVE_CRISIS
+  CARDIOMYOPATHY
+  OTHER
+}
+
+enum InfectionType {
+  BACTERIAL
+  VIRAL
+  FUNGAL
+  PARASITIC
+  UNKNOWN
+}
+
+enum LossToFollowUpReason {
+  FAMILY_RELOCATION
+  FINANCIAL_CONSTRAINTS
+  TRANSPORTATION_ISSUES
+  IMPROVED_CONDITION
+  SEEKING_ALTERNATIVE_CARE
+  FAMILY_DISSATISFACTION
+  CHANGED_CONTACT_INFO
+  SOCIAL_ISSUES
+  CULTURAL_BARRIERS
+  LANGUAGE_BARRIERS
+  UNKNOWN
+}
+
+enum LossToFollowUpClassification {
+  TEMPORARY_LOSS
+  PERMANENT_LOSS
+  TRANSFERRED_CARE
+  DECEASED_UNCONFIRMED
+  IMPROVED_DISCHARGED
+  UNKNOWN
+}
+
+enum DonorType {
+  LIVING_RELATED
+  LIVING_UNRELATED
+  DECEASED
+}
+
+enum DonorRelationship {
+  PARENT
+  SIBLING
+  GRANDPARENT
+  AUNT_UNCLE
+  COUSIN
+  FAMILY_FRIEND
+  ALTRUISTIC_DONOR
+  OTHER
+}
+
+enum GraftFunction {
+  IMMEDIATE_FUNCTION
+  SLOW_GRAFT_FUNCTION
+  DELAYED_GRAFT_FUNCTION
+  PRIMARY_NON_FUNCTION
+}
